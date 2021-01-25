@@ -34,8 +34,10 @@
 #include <mosquitto.h>
 #include <mosquitto_broker.h>
 #include <mosquitto_plugin.h>
-#include <fnmatch.h>
+//#include <fnmatch.h>
 #include <time.h>
+
+char* strsep1 (char** str, const char* delims);
 
 #if LIBMOSQUITTO_VERSION_NUMBER >= 1004090
 # define MOSQ_DENY_AUTH	MOSQ_ERR_PLUGIN_DEFER
@@ -224,7 +226,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 	nord++;
 #endif /* BE_PSK */
 
-	for (q = strsep(&p, ","); q && *q && (nord < NBACKENDS); q = strsep(&p, ",")) {
+	for (q = strsep1(&p, ","); q && *q && (nord < NBACKENDS); q = strsep1(&p, ",")) {
 		int found = 0;
 #if BE_MYSQL
 		if (!strcmp(q, "mysql")) {

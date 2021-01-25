@@ -33,6 +33,8 @@
 #include <openssl/evp.h>
 #include "base64.h"
 
+char* strsep1 (char** str, const char* delims);
+
 #define SEPARATOR       "$"
 #define TRUE	(1)
 #define FALSE	(0)
@@ -52,33 +54,33 @@ static int detoken(char *pbkstr, char **sha, int *iter, char **salt, char **key)
 
 #if defined(SUPPORT_DJANGO_HASHERS)
 {
-	if ((p = strsep(&s, "_")) == NULL)
+	if ((p = strsep1(&s, "_")) == NULL)
 		goto out;
 	if (strcmp(p, "pbkdf2") != 0)
 		goto out;
 }
 #else
 {
-	if ((p = strsep(&s, SEPARATOR)) == NULL)
+	if ((p = strsep1(&s, SEPARATOR)) == NULL)
 		goto out;
 	if (strcmp(p, "PBKDF2") != 0)
 		goto out;
 }
 #endif
 
-	if ((p = strsep(&s, SEPARATOR)) == NULL)
+	if ((p = strsep1(&s, SEPARATOR)) == NULL)
 		goto out;
 	*sha = strdup(p);
 
-	if ((p = strsep(&s, SEPARATOR)) == NULL)
+	if ((p = strsep1(&s, SEPARATOR)) == NULL)
 		goto out;
 	*iter = atoi(p);
 
-	if ((p = strsep(&s, SEPARATOR)) == NULL)
+	if ((p = strsep1(&s, SEPARATOR)) == NULL)
 		goto out;
 	*salt = strdup(p);
 
-	if ((p = strsep(&s, SEPARATOR)) == NULL)
+	if ((p = strsep1(&s, SEPARATOR)) == NULL)
 		goto out;
 	*key = strdup(p);
 
