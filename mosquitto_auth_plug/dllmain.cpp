@@ -92,7 +92,7 @@ extern "C" {
 		return (ok == negate ? NULL : pattern);
 	}
 
-	int fnmatch (const char* pattern, const char* string, int flags) {
+	int fnmatch1 (const char* pattern, const char* string, int flags) {
 		const char* stringstart;
 		char c, test;
 
@@ -137,7 +137,7 @@ extern "C" {
 
 				/* General case, use recursion. */
 				while ((test = *string) != EOS) {
-					if (!fnmatch (pattern, string, flags & ~FNM_PERIOD))
+					if (!fnmatch1 (pattern, string, flags & ~FNM_PERIOD))
 						return (0);
 					if (test == '/' && flags & FNM_PATHNAME)
 						break;

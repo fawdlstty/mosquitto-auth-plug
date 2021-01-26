@@ -38,6 +38,7 @@
 #include <time.h>
 
 char* strsep1 (char** str, const char* delims);
+int fnmatch1 (const char* pattern, const char* string, int flags);
 
 #if LIBMOSQUITTO_VERSION_NUMBER >= 1004090
 # define MOSQ_DENY_AUTH	MOSQ_ERR_PLUGIN_DEFER
@@ -136,7 +137,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 	ud = *userdata;
 	ud->superusers	= NULL;
 	ud->fallback_be = -1;
-	ud->anonusername = strdup("anonymous");
+	ud->anonusername = _strdup("anonymous");
 	ud->acl_cacheseconds = 300;
 	ud->auth_cacheseconds = 0;
 	ud->acl_cachejitter = 0;
@@ -157,10 +158,10 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		p_add(o->key, o->value);
 
 		if (!strcmp(o->key, "superusers"))
-			ud->superusers = strdup(o->value);
+			ud->superusers = _strdup(o->value);
 		if (!strcmp(o->key, "anonusername")) {
 			free(ud->anonusername);
-			ud->anonusername = strdup(o->value);
+			ud->anonusername = _strdup(o->value);
 		}
 		if (!strcmp(o->key, "cacheseconds") || !strcmp(o->key, "acl_cacheseconds"))
 			ud->acl_cacheseconds = atol(o->value);
@@ -181,7 +182,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		}
 #if 0
 		if (!strcmp(o->key, "topic_prefix"))
-			ud->topicprefix = strdup(o->value);
+			ud->topicprefix = _strdup(o->value);
 #endif
 	}
 
@@ -195,7 +196,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		_fatal("No backends configured.");
 	}
 
-	_p = p = strdup(backends);
+	_p = p = _strdup(backends);
 
 	_log(LOG_NOTICE, "** Configured order: %s\n", p);
 
@@ -219,7 +220,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 	pskbep = bep;
 	*pskbep = (struct backend_p *)malloc(sizeof(struct backend_p));
 	memset(*pskbep, 0, sizeof(struct backend_p));
-	(*pskbep)->name = strdup("psk");
+	(*pskbep)->name = _strdup("psk");
 
 	bep = pskbep;
 	bep++;
@@ -232,7 +233,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "mysql")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("mysql");
+			(*bep)->name = _strdup("mysql");
 			(*bep)->conf = be_mysql_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -251,7 +252,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "postgres")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("postgres");
+			(*bep)->name = _strdup("postgres");
 			(*bep)->conf = be_pg_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -270,7 +271,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "ldap")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("ldap");
+			(*bep)->name = _strdup("ldap");
 			(*bep)->conf = be_ldap_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -289,7 +290,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "cdb")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("cdb");
+			(*bep)->name = _strdup("cdb");
 			(*bep)->conf = be_cdb_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -308,7 +309,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "sqlite")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("sqlite");
+			(*bep)->name = _strdup("sqlite");
 			(*bep)->conf = be_sqlite_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -327,7 +328,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "redis")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("redis");
+			(*bep)->name = _strdup("redis");
 			(*bep)->conf = be_redis_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -346,7 +347,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "memcached")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("memcached");
+			(*bep)->name = _strdup("memcached");
 			(*bep)->conf = be_memcached_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -365,7 +366,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "http")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("http");
+			(*bep)->name = _strdup("http");
 			(*bep)->conf = be_http_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -384,7 +385,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "jwt")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("jwt");
+			(*bep)->name = _strdup("jwt");
 			(*bep)->conf = be_jwt_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -403,7 +404,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "mongo")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("mongo");
+			(*bep)->name = _strdup("mongo");
 			(*bep)->conf = be_mongo_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -421,7 +422,7 @@ int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_auth_opt *auth_
 		if (!strcmp(q, "files")) {
 			*bep = (struct backend_p *)malloc(sizeof(struct backend_p));
 			memset(*bep, 0, sizeof(struct backend_p));
-			(*bep)->name = strdup("files");
+			(*bep)->name = _strdup("files");
 			(*bep)->conf = be_files_init();
 			if ((*bep)->conf == NULL) {
 				_fatal("%s init returns NULL", q);
@@ -522,13 +523,13 @@ int mosquitto_auth_unpwd_check(void *userdata, const char *username, const char 
 	if (e) {
 		free(e->username);
 		free(e->clientid);
-		e->username = strdup(username);
-		e->clientid = strdup("client id not available");
+		e->username = _strdup(username);
+		e->clientid = _strdup("client id not available");
 	} else {
 		e = (struct cliententry *)malloc(sizeof(struct cliententry));
 		e->key = (void *)client;
-		e->username = strdup(username);
-		e->clientid = strdup("client id not available");
+		e->username = _strdup(username);
+		e->clientid = _strdup("client id not available");
 		HASH_ADD(hh, ud->clients, key, sizeof(void *), e);
 	}
 #endif
@@ -677,7 +678,7 @@ int mosquitto_auth_acl_check(void *userdata, const char *clientid, const char *u
 	/* Check for usernames exempt from ACL checking, first */
 
 	if (ud->superusers) {
-		if (fnmatch(ud->superusers, username, 0) == 0) {
+		if (fnmatch1 (ud->superusers, username, 0) == 0) {
 			_log(LOG_DEBUG, "aclcheck(%s, %s, %d) GLOBAL SUPERUSER=Y",
 				username, topic, access);
 			granted = MOSQ_ERR_SUCCESS;
