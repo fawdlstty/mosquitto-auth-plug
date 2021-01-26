@@ -170,40 +170,47 @@ extern "C" {
 		/* NOTREACHED */
 	}
 
-#include "D:/GitHub/mosquitto/lib/mosquitto_internal.h"
+	//#include "D:/GitHub/mosquitto/lib/mosquitto_internal.h"
+
+	typedef const char* (*mosquitto_client_id_t) (const struct mosquitto *client);
+	typedef void* (*mosquitto_client_certificate_t) (const struct mosquitto *client);
+	typedef const char* (*mosquitto_client_username_t) (const struct mosquitto *client);
+
+	static mosquitto_client_id_t s_mosquitto_client_id = nullptr;
+	static mosquitto_client_certificate_t s_mosquitto_client_certificate = nullptr;
+	static mosquitto_client_username_t s_mosquitto_client_username = nullptr;
+
+	void _init_mosquitto_module () {
+		HMODULE _hModule = ::GetModuleHandle (nullptr);
+		s_mosquitto_client_id = (mosquitto_client_id_t) ::GetProcAddress (_hModule, "mosquitto_client_id");
+		s_mosquitto_client_certificate = (mosquitto_client_certificate_t) ::GetProcAddress (_hModule, "mosquitto_client_certificate");
+		s_mosquitto_client_username = (mosquitto_client_username_t) ::GetProcAddress (_hModule, "mosquitto_client_username");
+	}
 
 	const char* mosquitto_client_id (const struct mosquitto* client) {
-		if (client) {
-			return client->id;
-		} else {
-			return NULL;
-		}
+		if (s_mosquitto_client_id == nullptr)
+			_init_mosquitto_module ();
+		if (s_mosquitto_client_id)
+			return s_mosquitto_client_id (client);
+		else
+			return nullptr;
 	}
 
 	void* mosquitto_client_certificate (const struct mosquitto* client) {
-#ifdef WITH_TLS
-		if (client && client->ssl) {
-			return SSL_get_peer_certificate (client->ssl);
-		} else {
-			return NULL;
-		}
-#else
-		return NULL;
-#endif
+		if (s_mosquitto_client_certificate == nullptr)
+			_init_mosquitto_module ();
+		if (s_mosquitto_client_certificate)
+			return s_mosquitto_client_certificate (client);
+		else
+			return nullptr;
 	}
 
 	const char* mosquitto_client_username (const struct mosquitto* client) {
-		if (client) {
-#ifdef WITH_BRIDGE
-			if (client->bridge) {
-				return client->bridge->local_username;
-			} else
-#endif
-			{
-				return client->username;
-			}
-		} else {
-			return NULL;
-		}
+		if (s_mosquitto_client_username == nullptr)
+			_init_mosquitto_module ();
+		if (s_mosquitto_client_username)
+			return s_mosquitto_client_username (client);
+		else
+			return nullptr;
 	}
 }

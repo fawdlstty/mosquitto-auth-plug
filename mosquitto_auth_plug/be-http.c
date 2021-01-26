@@ -258,7 +258,8 @@ void *be_http_init()
 	conf->port = p_stab("http_port") == NULL ? 80 : atoi(p_stab("http_port"));
 	if (p_stab("http_hostname") != NULL) {
 		conf->hostheader = (char *)malloc(128);
-		sprintf(conf->hostheader, "Host: %s", p_stab("http_hostname"));
+		if (conf->hostheader)
+			sprintf(conf->hostheader, "Host: %s", p_stab("http_hostname"));
 	} else {
 		conf->hostheader = NULL;
 	}
@@ -271,7 +272,8 @@ void *be_http_init()
 	conf->aclcheck_envs = p_stab("http_aclcheck_params");
 	if(p_stab("http_basic_auth_key")!= NULL){
 		conf->basic_auth = (char *)malloc( strlen("Authorization: Basic %s") + strlen(p_stab("http_basic_auth_key")));
-		sprintf(conf->basic_auth, "Authorization: Basic %s",p_stab("http_basic_auth_key"));
+		if (conf->basic_auth)
+			sprintf(conf->basic_auth, "Authorization: Basic %s",p_stab("http_basic_auth_key"));
 	} else {
 		conf->basic_auth = NULL;
 	}
